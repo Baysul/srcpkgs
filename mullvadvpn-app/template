@@ -1,0 +1,66 @@
+pkgname=mullvadvpn-app
+version=2026.1
+revision=1
+archs="x86_64 aarch64"
+maintainer="Basil <parsley@duck.com>"
+short_desc="The Mullvad VPN client app for desktop"
+homepage="https://mullvad.net/"
+license="GPL-3.0-or-later"
+changelog="https://raw.githubusercontent.com/mullvad/mullvadvpn-app/refs/heads/main/CHANGELOG.md"
+# Might need to specify Electron stuff, e.g. alsa-lib, nss, nspr
+depends="gtk+3 dbus-glib libayatana-appindicator"
+
+case "${XBPS_TARGET_MACHINE}" in
+    x86_64*)
+        _deb_arch=amd64
+        checksum=1e579a8db11bc3967569bfc4e33491f86c43388baf7a03f837dc9115962fef3e
+        ;;
+    aarch64*)
+        _deb_arch=arm64
+        checksum=326d85e8f075e691e0469b30d5cd4f8e620072e19aaa17c07994b91d77685914
+        ;;
+esac
+
+distfiles="https://github.com/mullvad/mullvadvpn-app/releases/download/${version}/MullvadVPN-${version}_${_deb_arch}.deb"
+
+do_extract() {
+    ar x "${XBPS_SRCDISTDIR}/${pkgname}-${version}/MullvadVPN-${version}_${_deb_arch}.deb"
+    bsdtar xf data.tar.xz -C ${wrksrc}
+
+    # Void doesn't use systemd
+    rm -rf "${wrksrc}/usr/lib/systemd"
+
+    # The "/opt/Mullvad VPN" path (the default) isn't standard
+    mv ${wrksrc}/opt/Mullvad\ VPN ${wrksrc}/usr/lib/${pkgname}
+}
+
+do_install() {
+    vmkdir usr/lib/${pkgname}
+    vcopy usr/lib/${pkgname}/* usr/lib/${pkgname}/
+
+    # Icons
+    for _s in 16 32 48 64 128 256 512 1024; do
+        vmkdir "usr/share/icons/hicolor/${_s}x${_s}/apps"
+    done
+
+    vcopy "usr/share/icons/hicolor/*" usr/share/icons/hicolor/
+
+    # Binaries
+    vmkdir usr/bin
+
+    for _bin in mullvad-daemon mullvad  mullvad-exclude; do
+        vbin usr/bin/${_bin}
+    done
+
+    ln -sf ${DESTDIR}/usr/lib/${pkgname}/resources/mullvad-problem-report ${DESTDIR}/usr/bin/mullvad-problem-report
+
+    vinstall usr/share/applications/mullvad-vpn.desktop 644 usr/share/applications
+}
+
+post_install() {
+    vcompletion usr/share/bash-completion/completions/mullvad bash mullvad
+    vcompletion usr/local/share/zsh/site-functions/_mullvad zsh mullvad
+    vcompletion usr/share/fish/vendor_completions.d/mullvad.fish fish mullvad
+
+    vsv mullvad
+}

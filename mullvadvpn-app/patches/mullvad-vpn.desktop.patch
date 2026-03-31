@@ -1,0 +1,11 @@
+*** a/usr/share/applications/mullvad-vpn.desktop
+--- b/usr/share/applications/mullvad-vpn.desktop
+***************
+*** 2,4 ****
+  Name=Mullvad VPN
+! Exec="/opt/Mullvad VPN/mullvad-vpn" %U
+  Terminal=false
+--- 2,4 ----
+  Name=Mullvad VPN
+! Exec=/usr/lib/mullvadvpn-app/mullvad-vpn %U
+  Terminal=false
